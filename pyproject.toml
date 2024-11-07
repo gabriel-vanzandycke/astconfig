@@ -1,12 +1,17 @@
 [project]
 name = "astconfig"
 version = "0.1.0"
-description = "Add your description here"
+authors = [
+    {name = "Gabriel Van Zandycke", email = "gabriel.vanzandycke@hotmail.com"},
+]
+description = "Python configuration leveraging python abstract-synctax-tree (AST) representation"
 readme = "README.md"
-requires-python = "==3.11.*"
+license = "LGPL"
+requires-python = ">=3.8"
 dependencies = [
     "astunparse>=1.6.3",
 ]
+urls.Homepage = "https://github.com/gabriel-vanzandycke/astconfig"
 
 [build-system]
 requires = ["hatchling"]

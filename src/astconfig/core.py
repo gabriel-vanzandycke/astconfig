@@ -19,7 +19,8 @@ class DictObject(dict):
             raise AttributeError(f"{key} cannot be retrieved as attribute. Use '[{key}]' instead")
         return self[key]
 
-class Config(dict):
+
+class Config(DictObject):
     def __init__(self, config: str):
         if os.path.isfile(config):
             with open(config) as config:
@@ -34,13 +35,9 @@ class Config(dict):
     def update(self, overwrite):
         if isinstance(overwrite, str):
             overwrite = exec_wrapper(overwrite)
-        super().update(**overwrite)
         update_ast(self.ast, overwrite) # consumes 'overwrite' items
-
-    def __getattr__(self, key):
-        if key in dir(self):
-            raise AttributeError(f"{key} cannot be retrieved as attribute. Use '[{key}]' instead")
-        return self[key]
+        d = exec_wrapper(str(self))
+        super().__init__(d)
 
     def __getstate__(self):
         return (self.ast, )

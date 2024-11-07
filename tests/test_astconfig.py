@@ -45,3 +45,15 @@ def test_config_update_string_with_unoverwritten():
     c.update('c=2')
     assert dict(c) == {'a': 2, 'b': 5, 'c': 2}
     assert str(c) == "\na = 2\nb = 5\nc = 2\n"
+
+def test_config_dict_updated_key_as_string():
+    c = Config("key = 'a'\nvalue = {'a': 12, 'b': 42,}[key]")
+    assert c.value == 12
+    c.update("key='b'")
+    assert c.value == 42
+
+def test_config_dict_updated_key_as_dict():
+    c = Config("key = 'a'\nvalue = {'a': 12, 'b': 42,}[key]")
+    assert c.value == 12
+    c.update({'key': 'b'})
+    assert c.value == 42

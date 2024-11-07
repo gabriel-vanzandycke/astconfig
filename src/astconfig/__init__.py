@@ -1,3 +1,3 @@
-from .core import Config, exec_wrapper, DictObject
+from .core import Config, DictObject
 
-__all__ = ["Config", "exec_wrapper", "DictObject"]
+__all__ = ["Config", "DictObject"]
