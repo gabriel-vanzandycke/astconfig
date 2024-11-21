@@ -47,13 +47,40 @@ def test_config_update_string_with_unoverwritten():
     assert str(c) == "\na = 2\nb = 5\nc = 2\n"
 
 def test_config_dict_updated_key_as_string():
-    c = Config("key = 'a'\nvalue = {'a': 12, 'b': 42,}[key]")
+    c = Config("key = 'a'\nvalue = {'a': 12, 'b': 42}[key]")
     assert c.value == 12
     c.update("key='b'")
     assert c.value == 42
 
 def test_config_dict_updated_key_as_dict():
-    c = Config("key = 'a'\nvalue = {'a': 12, 'b': 42,}[key]")
+    c = Config("key = 'a'\nvalue = {'a': 12, 'b': 42}[key]")
     assert c.value == 12
     c.update({'key': 'b'})
     assert c.value == 42
+
+def test_config_or_operator_with_dict():
+    c = Config("key = 'a'\nvalue = {'a': 12, 'b': 42}[key]")
+    c2 = c | {'key': 'b'}
+    assert isinstance(c2, Config)
+    assert c2.value == 42
+
+def test_config_or_operator_with_str():
+    c = Config("key = 'a'\nvalue = {'a': 12, 'b': 42}[key]")
+    c2 = c | "key='b'"
+    assert isinstance(c2, Config)
+    assert c2.value == 42
+
+def test_config_or_operator_with_config():
+    c = Config("key = 'a'\nvalue = {'a': 12, 'b': 42}[key]")
+    c2 = c | Config("key='b'")
+    assert isinstance(c2, Config)
+    assert c2.value == 42
+
+def test_config_product():
+    c = Config("key = 'a'\nvalue = {'a': 12, 'b': 42}[key]")
+    cs = list(c.product("key=['a','b']"))
+    assert len(cs) == 2
+    assert isinstance(cs[0], Config)
+    assert cs[0].value == 12
+    assert isinstance(cs[1], Config)
+    assert cs[1].value == 42

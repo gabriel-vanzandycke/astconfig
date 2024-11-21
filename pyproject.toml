@@ -6,7 +6,7 @@ authors = [
 ]
 description = "Python configuration leveraging python abstract-synctax-tree (AST) representation"
 readme = "README.md"
-license = "LGPL"
+license = {text = "LGPL"}
 requires-python = ">=3.8"
 dependencies = [
     "astunparse>=1.6.3",

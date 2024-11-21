@@ -1,5 +1,9 @@
 import ast
+import copy
+import functools
+import itertools
 import os
+import sys
 from typing import Any, Dict
 
 import astunparse
@@ -12,12 +16,14 @@ def exec_wrapper(string: str, env=None) -> Dict[str, Any]:
     exec(code, None, env)
     return env
 
-
 class DictObject(dict):
-    def __getattr__(self, key):
-        if key in dir(self):
-            raise AttributeError(f"{key} cannot be retrieved as attribute. Use '[{key}]' instead")
-        return self[key]
+    def __getattr__(self, name):
+        if name in dir(self):
+            raise AttributeError(f"{name} cannot be retrieved as attribute. Use '[{name}]' instead")
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
 
 class Config(DictObject):
@@ -32,12 +38,27 @@ class Config(DictObject):
     def __str__(self):
         return astunparse.unparse(self.ast)
 
-    def update(self, overwrite):
-        if isinstance(overwrite, str):
-            overwrite = exec_wrapper(overwrite)
+    def update(self, *overwrite_args, **overwrite_kwargs):
+        try:
+            overwrite = functools.reduce(
+                lambda acc, arg: {**acc, **(exec_wrapper(arg) if isinstance(arg, str) else arg)},
+                overwrite_args, overwrite_kwargs
+            )
+        except TypeError as e:
+            raise TypeError("'update' only supports str, dicts or **kwargs") from e
         update_ast(self.ast, overwrite) # consumes 'overwrite' items
         d = exec_wrapper(str(self))
         super().__init__(d)
+
+    def __or__(self, other):
+        if isinstance(other, str):
+            other = exec_wrapper(other)
+        config = copy.deepcopy(self)
+        config.update(other)
+        return config
+
+    def __xor__(self, other):
+        return self.__or__(other)
 
     def __getstate__(self):
         return (self.ast, )
@@ -45,3 +66,15 @@ class Config(DictObject):
     def __setstate__(self, state):
         ast, = state
         self.__init__(astunparse.unparse(ast))
+
+    def product(self, *args):
+        args = [exec_wrapper(arg) if isinstance(arg, str) else arg
+            for arg in args]
+        args = functools.reduce(lambda x, y: x | y, args)
+        kvs = [[(k, v) for v in args[k]] for k in args]
+        for update in itertools.product(*kvs):
+            update = dict(update)
+            config = copy.deepcopy(self)
+            config.update(update)
+            yield config
+
