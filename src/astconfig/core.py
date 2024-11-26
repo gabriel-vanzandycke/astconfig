@@ -3,7 +3,7 @@ import copy
 import functools
 import itertools
 import os
-import sys
+import types
 from typing import Any, Dict
 
 import astunparse
@@ -28,17 +28,25 @@ class DictObject(dict):
 
 class Config(DictObject):
     def __init__(self, config: str):
+        """ Creates a configuration object from a string or a filename.
+        """
         if os.path.isfile(config):
             with open(config) as config:
                 config = config.read()
         self.ast = ast.parse(config)
         d = exec_wrapper(str(self))
-        super().__init__(d)
+        super().__init__({k:v for k,v in d.items() if not isinstance(v, types.ModuleType)})
 
     def __str__(self):
         return astunparse.unparse(self.ast)
 
     def update(self, *overwrite_args, **overwrite_kwargs):
+        """ Updates in place current configuration with the given values.
+            It accepts:
+            - strings of format '<key>=<value>'
+            - dictionaries
+            - or keyword arguments
+        """
         try:
             overwrite = functools.reduce(
                 lambda acc, arg: {**acc, **(exec_wrapper(arg) if isinstance(arg, str) else arg)},
@@ -59,6 +67,9 @@ class Config(DictObject):
 
     def __xor__(self, other):
         return self.__or__(other)
+
+    def __reduce__(self):
+        return (self.__class__, (str(self), ))
 
     def __getstate__(self):
         return (self.ast, )
