@@ -27,7 +27,7 @@ class DictObject(dict):
 
 
 class Config(DictObject):
-    def __init__(self, config: str):
+    def __init__(self, config: str = ""):
         """ Creates a configuration object from a string or a filename.
         """
         if os.path.isfile(config):
