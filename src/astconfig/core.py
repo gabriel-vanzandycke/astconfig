@@ -14,7 +14,7 @@ def exec_wrapper(string: str, env=None) -> Dict[str, Any]:
     env = env or {}
     code = compile(string, 'input-string', 'exec')
     exec(code, None, env)
-    return env
+    return {k:v for k,v in env.items() if not isinstance(v, types.ModuleType)}
 
 class DictObject(dict):
     def __getattr__(self, name):
@@ -34,8 +34,7 @@ class Config(DictObject):
             with open(config) as config:
                 config = config.read()
         self.ast = ast.parse(config)
-        d = exec_wrapper(str(self))
-        super().__init__({k:v for k,v in d.items() if not isinstance(v, types.ModuleType)})
+        super().__init__(exec_wrapper(str(self)))
 
     def __str__(self):
         return astunparse.unparse(self.ast)
@@ -55,8 +54,7 @@ class Config(DictObject):
         except TypeError as e:
             raise TypeError("'update' only supports str, dicts or **kwargs") from e
         update_ast(self.ast, overwrite) # consumes 'overwrite' items
-        d = exec_wrapper(str(self))
-        super().__init__(d)
+        super().__init__(exec_wrapper(str(self)))
 
     def __or__(self, other):
         if isinstance(other, str):
