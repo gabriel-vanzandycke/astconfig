@@ -4,7 +4,7 @@ import functools
 import itertools
 import os
 import types
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import astunparse
 
@@ -27,12 +27,13 @@ class DictObject(dict):
 
 
 class Config(DictObject):
-    def __init__(self, config: str = ""):
+    def __init__(self, config: Optional[str] = ""):
         """ Creates a configuration object from a string or a filename.
         """
+        config = config or ""
         if os.path.isfile(config):
-            with open(config) as config:
-                config = config.read()
+            with open(config) as fd:
+                config = fd.read()
         self.ast = ast.parse(config)
         super().__init__(exec_wrapper(str(self)))
 
